@@ -18,6 +18,12 @@ public interface MovieApi {
             @Query("page") int page
     );
 
+    @GET("/3/movie/popular")
+    Call<MovieSearchResponse> getPopular(
+            @Query("api_key") String key,
+            @Query("page") int page
+    );
+
     // Search for movies
     @GET("3/movie/{movie_id}?")
     Call<MovieModel> searchSingleMovie(

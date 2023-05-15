@@ -18,8 +18,11 @@ public class HomeViewModel extends ViewModel {
         return movieRepository.getMovies();
     }
 
-
+//-------------------------------3-----------------------------------------
     public void searchMovieApi(String query, int pageNumber){
         movieRepository.searchMovieApi(query, pageNumber);
+    }
+    public void searchNextPage(){
+        movieRepository.searchNextPage();
     }
 }

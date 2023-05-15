@@ -1,8 +1,6 @@
 package com.example.mockprojectv3.request;
 
 import android.util.Log;
-
-import androidx.appcompat.widget.DrawableUtils;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
@@ -97,7 +95,6 @@ public class MovieApiClient {
                 throw new RuntimeException(e);
             }
         }
-
             private Call<MovieSearchResponse> getMovies(String query, int pageNumber){
                 return Servicey.getMovieApi().searchMovie(
                         Credentials.API_KEY,
@@ -106,10 +103,9 @@ public class MovieApiClient {
                 );
             }
 
-            private void cancelRequest(){
-                Log.v("Tag", "Cancelling search request: " );
-                cancelRequest = true;
-            }
-
+//            private void cancelRequest(){
+//                Log.v("Tag", "Cancelling search request: " );
+//                cancelRequest = true;
+//            }
         }
     }

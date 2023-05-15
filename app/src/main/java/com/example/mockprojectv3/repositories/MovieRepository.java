@@ -10,11 +10,9 @@ import java.util.List;
 
 public class MovieRepository {
     private static MovieRepository instance;
-
     private MovieApiClient movieApiClient;
-
-
-
+    private String mQuery;
+    private int mPageNumber;
 
     public static MovieRepository getInstance(){
         if(instance == null){
@@ -35,7 +33,12 @@ public class MovieRepository {
     }
 //------------------------------------------2----------------------------------------
     public void searchMovieApi(String query, int pageMuber){
+        mQuery = query;
+        mPageNumber = pageMuber;
         movieApiClient.searchMoviesApi(query, pageMuber);
+    }
+    public void searchNextPage(){
+        searchMovieApi(mQuery, mPageNumber + 1);
     }
 
 }

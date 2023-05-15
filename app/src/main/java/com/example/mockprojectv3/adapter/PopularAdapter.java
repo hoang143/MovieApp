@@ -56,6 +56,15 @@ public class PopularAdapter extends RecyclerView.Adapter<PopularAdapter.PopularV
         return 0;
     }
 
+    public MovieModel getSelectedMovie(int position) {
+        if(mMovies != null){
+            if(mMovies.size() >0){
+                return mMovies.get(position);
+            }
+        }
+        return null;
+    }
+
     public class PopularViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
         private TextView tvTitle;
         private ImageView ivPop;
@@ -65,6 +74,7 @@ public class PopularAdapter extends RecyclerView.Adapter<PopularAdapter.PopularV
 
         public PopularViewHolder(@NonNull View itemView, OnPopularListener onPopularListener ){
             super(itemView);
+            this.onPopularListener = onPopularListener;
             tvTitle = itemView.findViewById(R.id.tvTitle);
             ivPop = itemView.findViewById(R.id.ivPopular);
 

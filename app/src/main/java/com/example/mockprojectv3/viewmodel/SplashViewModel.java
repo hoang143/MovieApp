@@ -1,4 +1,4 @@
-package com.example.mockprojectv3.ui.main;
+package com.example.mockprojectv3.viewmodel;
 
 import androidx.lifecycle.ViewModel;
 

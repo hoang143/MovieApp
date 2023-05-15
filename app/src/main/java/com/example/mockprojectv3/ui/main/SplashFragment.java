@@ -1,6 +1,5 @@
 package com.example.mockprojectv3.ui.main;
 
-import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 
 import android.os.Bundle;
@@ -16,7 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.mockprojectv3.R;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.example.mockprojectv3.viewmodel.SplashViewModel;
 
 public class SplashFragment extends Fragment {
     private SplashViewModel mViewModel;

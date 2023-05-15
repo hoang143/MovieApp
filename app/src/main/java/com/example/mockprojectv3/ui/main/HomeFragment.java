@@ -2,9 +2,12 @@ package com.example.mockprojectv3.ui.main;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -13,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.mockprojectv3.R;
 import com.example.mockprojectv3.adapter.CategoryAdapter;
@@ -27,6 +31,7 @@ import com.example.mockprojectv3.response.MovieSearchResponse;
 import com.example.mockprojectv3.utils.Credentials;
 import com.example.mockprojectv3.viewmodel.HomeViewModel;
 import com.example.mockprojectv3.viewmodel.MainActivityViewModel;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,30 +52,23 @@ public class HomeFragment extends Fragment implements OnPopularListener {
     private CategoryAdapter categoryAdapter;
     private PopularAdapter popularAdapter;
     private TextView tvTestApi;
-    private MainActivityViewModel mainActivityViewModel;
-
+    private SearchView searchView;
     private HomeViewModel homeViewModel;
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = LayoutInflater.from(getContext()).inflate(R.layout.fragment_home,container, false);
         tvTestApi = view.findViewById(R.id.tvWelcome);
-
-
+        searchView = view.findViewById(R.id.svHome);
+        
+        //Set up searchview
+        SetupSearchView();
 
 //        mainActivityViewModel = new ViewModelProvider(this).get(MainActivityViewModel.class);
         homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
 
-
-
-
-
-//        homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
-
         //Categories
         rcCategories = view.findViewById(R.id.rcCategories);
-
 
         categoryAdapter = new CategoryAdapter();
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this.getContext(), RecyclerView.HORIZONTAL,false);
@@ -84,9 +82,28 @@ public class HomeFragment extends Fragment implements OnPopularListener {
         rcPopular = view.findViewById(R.id.rcPopular);
         ConfigureRecyclerView();
         ObserveAnyChange();
-        tvTestApi.setOnClickListener(view1 -> searchMovieApi("Marvel", 1));
+//        searchMovieApi("Marvel", 1);
+        tvTestApi.setOnClickListener(view1 -> GetRetrofitResponsePopularMovies());
 
         return view;
+    }
+    private void SetupSearchView() {
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                homeViewModel.searchMovieApi(
+                        query,
+                        1
+                );
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
+
     }
 
     private void ObserveAnyChange(){
@@ -170,6 +187,32 @@ public class HomeFragment extends Fragment implements OnPopularListener {
            }
        });
     }
+    private void GetRetrofitResponsePopularMovies(){
+        MovieApi movieApi = Servicey.getMovieApi();
+
+        Call<MovieSearchResponse> responseCall = movieApi
+                .getPopular(
+                        Credentials.API_KEY,
+                        1
+                );
+        responseCall.enqueue(new Callback<MovieSearchResponse>() {
+            @Override
+            public void onResponse(Call<MovieSearchResponse> call, Response<MovieSearchResponse> response) {
+                Log.e("Sunday", "The response "+ response.body().toString() );
+
+                List<MovieModel> movies = new ArrayList<>(response.body().getMovies());
+
+                for (MovieModel movie: movies) {
+                    Log.v("Sunday", "the release date " + movie.getTitle());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<MovieSearchResponse> call, Throwable t) {
+
+            }
+        });
+    }
     private List<Popular> getListPopular() {
         List<Popular> lstPop = new ArrayList<>();
         lstPop.add(new Popular(R.drawable.profile_test, " phim 1"));
@@ -184,11 +227,10 @@ public class HomeFragment extends Fragment implements OnPopularListener {
     }
     private List<Category> getListCategory() {
         List<Category> lst = new ArrayList<>();
-
-        lst.add(new Category("Popular Movies"));
-        lst.add(new Category("Latest Movies"));
-        lst.add(new Category("Trending Movies"));
-        lst.add(new Category("Category 4"));
+        lst.add(new Category("Action"));
+        lst.add(new Category("Drama"));
+        lst.add(new Category("Comedy"));
+        lst.add(new Category("Superhero"));
         return lst;
     }
 
@@ -196,20 +238,38 @@ public class HomeFragment extends Fragment implements OnPopularListener {
     private void searchMovieApi(String query, int pageNumber){
         homeViewModel.searchMovieApi(query, pageNumber);
     }
-
     private void ConfigureRecyclerView(){
         popularAdapter = new PopularAdapter( this);
         rcPopular.setAdapter(popularAdapter);
         rcPopular.setLayoutManager(new LinearLayoutManager(this.getContext(), RecyclerView.HORIZONTAL,false));
-    }
 
+        rcPopular.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                if(!rcPopular.canScrollHorizontally(1)){
+                    homeViewModel.searchNextPage();
+
+                }
+            }
+        });
+
+    }
     @Override
     public void onPopularClick(int position) {
+//        Toast.makeText(this.getContext(), "The position "+ position, Toast.LENGTH_SHORT).show();
+//        Navigation.findNavController(getView()).navigate(HomeFragmentDirections.home2details());
+        BottomNavigationView bottomNavigationView = requireActivity().findViewById(R.id.bottomNav);
+        bottomNavigationView.setVisibility(View.GONE);
+
+        MovieModel movieModel = popularAdapter.getSelectedMovie(position);
+        Log.e("Sunday", movieModel.getTitle());
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("movie", movieModel);
+//        Navigation.findNavController(getView()).navigate(HomeFragmentDirections.home2details(bundle));
+        Navigation.findNavController(getView()).navigate(HomeFragmentDirections.home2details(movieModel).setMovie(movieModel));
 
     }
-
     @Override
     public void onCategoryClick(String category) {
-
     }
 }

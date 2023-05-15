@@ -55,6 +55,11 @@ public class MovieModel implements Parcelable {
             return new MovieModel[size];
         }
     };
+
+    public MovieModel() {
+
+    }
+
     // Getters
     public String getTitle() {
         return title;
