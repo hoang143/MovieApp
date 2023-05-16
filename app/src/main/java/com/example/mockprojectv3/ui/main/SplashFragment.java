@@ -16,6 +16,9 @@ import android.view.ViewGroup;
 
 import com.example.mockprojectv3.R;
 import com.example.mockprojectv3.viewmodel.SplashViewModel;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class SplashFragment extends Fragment {
     private SplashViewModel mViewModel;
@@ -46,9 +49,19 @@ public class SplashFragment extends Fragment {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                Navigation.findNavController(getView()).navigate(SplashFragmentDirections.splash2login());
-//                return null;
+                nextFragment();
             }
-        }, 1000);
+        }, 1500);
+    }
+
+    private void nextFragment() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if(user == null){
+            Navigation.findNavController(getView()).navigate(SplashFragmentDirections.splash2login());
+        }else {
+            Navigation.findNavController(getView()).navigate(SplashFragmentDirections.splash2home());
+            BottomNavigationView bottomNavigationView = requireActivity().findViewById(R.id.bottomNav);
+            bottomNavigationView.setVisibility(View.VISIBLE);
+        }
     }
 }

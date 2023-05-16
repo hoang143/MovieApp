@@ -41,6 +41,7 @@ public class PopularAdapter extends RecyclerView.Adapter<PopularAdapter.PopularV
         Glide.with(holder.itemView.getContext())
                 .load("https://image.tmdb.org/t/p/w500/"
                         +mMovies.get(position).getPoster_path())
+                .error(R.drawable.img_not_found)
                 .into(holder.ivPop);
     }
 

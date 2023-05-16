@@ -6,4 +6,8 @@
     <string name="popular">Popular</string>
     <string name="categories">Categories</string>
     <string name="welcome">Let\'s relax and watch a movie !</string>
+    <string name="common_login">Login</string>
+    <string name="common_password">Password</string>
+    <string name="common_gmail">Gmail</string>
+    <string name="common_username">Username</string>
 </resources>

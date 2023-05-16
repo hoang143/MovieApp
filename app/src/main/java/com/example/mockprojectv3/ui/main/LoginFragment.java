@@ -12,6 +12,9 @@ import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
 
 import com.example.mockprojectv3.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -23,71 +26,52 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
  */
 public class LoginFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
-    public LoginFragment() {
-        // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment SecondFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static LoginFragment newInstance(String param1, String param2) {
-        LoginFragment fragment = new LoginFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-    }
+    Button btnLogIn;
+    EditText etMail, etPassword;
+    TextView tvSignup;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        View view = LayoutInflater.from(getContext()).inflate(R.layout.fragment_login,container, false);
+        BottomNavigationView bottomNavigationView = requireActivity().findViewById(R.id.bottomNav);
+        bottomNavigationView.setVisibility(View.GONE);
         // Inflate the layout for this fragment
-
-        return inflater.inflate(R.layout.fragment_login, container, false);
-    }
-
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
+//        btnLogIn = view.findViewById(R.id.btnLogin);
+        initUI(view);
+        btnLogIn.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void run() {
-                Navigation.findNavController(getView()).navigate(LoginFragmentDirections.login2home());
-//                return null;
+            public void onClick(View view) {
+                Navigation.findNavController(view).navigate(LoginFragmentDirections.login2home());
+                BottomNavigationView bottomNavigationView = requireActivity().findViewById(R.id.bottomNav);
+                bottomNavigationView.setVisibility(View.VISIBLE);
             }
-        }, 1000);
+        });
+        tvSignup.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Navigation.findNavController(view).navigate(LoginFragmentDirections.login2signup());
+                BottomNavigationView bottomNavigationView = requireActivity().findViewById(R.id.bottomNav);
+                bottomNavigationView.setVisibility(View.GONE);
+            }
+        });
+
+
+
+
+        return view;
     }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
 //        requireActivity().getSupportFragmentManager().popBackStack();
-        BottomNavigationView bottomNavigationView = requireActivity().findViewById(R.id.bottomNav);
-        bottomNavigationView.setVisibility(View.VISIBLE);
+    }
+
+    private void initUI(View view){
+        btnLogIn = view.findViewById(R.id.btnLogin);
+        tvSignup = view.findViewById(R.id.tvSignUp);
+        etMail = view.findViewById(R.id.etUserNameLogin);
+        etPassword = view.findViewById(R.id.etPasswordLogin);
     }
 }
