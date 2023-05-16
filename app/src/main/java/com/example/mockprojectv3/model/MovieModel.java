@@ -59,7 +59,9 @@ public class MovieModel implements Parcelable {
     public MovieModel() {
 
     }
-
+    public MovieModel(String title) {
+        this.title = title;
+    }
     // Getters
     public String getTitle() {
         return title;
@@ -120,5 +122,9 @@ public class MovieModel implements Parcelable {
                 ", movie_overview='" + movie_overview + '\'' +
                 ", original_language='" + original_language + '\'' +
                 '}';
+    }
+
+    public boolean isTrending() {
+        return true;
     }
 }

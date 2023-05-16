@@ -18,8 +18,6 @@ import java.util.List;
 
 public class PopularAdapter extends RecyclerView.Adapter<PopularAdapter.PopularViewHolder> {
 
-
-
     private List<MovieModel> mMovies;
     private OnPopularListener onPopularListener;
     public PopularAdapter(OnPopularListener onPopularListener) {
@@ -29,8 +27,6 @@ public class PopularAdapter extends RecyclerView.Adapter<PopularAdapter.PopularV
         this.mMovies = list;
         notifyDataSetChanged();
     }
-
-
     @NonNull
     @Override
     public PopularViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

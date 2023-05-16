@@ -40,6 +40,7 @@ public class NotificationFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Toast.makeText(this.getContext(), "on create", Toast.LENGTH_SHORT).show();
 
         mFragmentNotificationBinding = FragmentNotificationBinding.inflate(inflater, container, false);
 
@@ -84,6 +85,7 @@ public class NotificationFragment extends Fragment {
 
     @Override
     public void onStart() {
+        Toast.makeText(this.getContext(), "on start", Toast.LENGTH_SHORT).show();
         super.onStart();
         notificationAdapter.setData(getNotifications());
     }

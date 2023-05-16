@@ -2,10 +2,8 @@ package com.example.mockprojectv3;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Bundle;
 import android.view.MenuItem;
-
 import com.example.mockprojectv3.ui.main.FavouriteFragment;
 import com.example.mockprojectv3.ui.main.HomeFragment;
 import com.example.mockprojectv3.ui.main.NotificationFragment;
@@ -17,7 +15,6 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
     HomeFragment homeFragment = new HomeFragment();
     FavouriteFragment favouriteFragment = new FavouriteFragment();
     NotificationFragment notificationFragment = new NotificationFragment();
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
