@@ -22,12 +22,13 @@ public interface MovieApi {
 
     // Get Popular
     @GET("/3/movie/popular")
-    Single<Response<MovieSearchResponse>> getPopular(
+    Single<Response<MovieSearchResponse>> getPopularMovies(
             @Query("api_key") String key,
             @Query("page") int page
     );
+
     // Get Trending
-    @GET("3/movie/trending")
+    @GET("3/movie/top_rated")
     Single<Response<MovieSearchResponse>> getTrendingMovies(
             @Query("api_key") String key,
             @Query("page") int page

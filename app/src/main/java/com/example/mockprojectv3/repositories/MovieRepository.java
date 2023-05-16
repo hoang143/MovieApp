@@ -12,6 +12,7 @@ import com.example.mockprojectv3.response.MovieSearchResponse;
 import com.example.mockprojectv3.utils.Credentials;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -24,6 +25,15 @@ public class MovieRepository {
     //Live Data
     private MutableLiveData<List<MovieModel>> mSearchMovies;
     private MutableLiveData<List<MovieModel>> mTrendingMovies;
+    private MutableLiveData<List<MovieModel>> mPopularMovies;
+    private List<MovieModel> currentSearchResults;
+    private List<MovieModel> currentPopular;
+    private List<MovieModel> currentTrending;
+
+    private String mQuery;
+    private int mPageNumber;
+    private int mPageNumberMovies;
+
 
     //Singleton
     private static MovieRepository instance;
@@ -36,69 +46,112 @@ public class MovieRepository {
 
     private CompositeDisposable compositeDisposable;
     private RetrieveMovieRunnable retrieveMovieRunnable;
+    private RetrieveMovies retrieveMovies;
     public MovieRepository(){
         mSearchMovies = new MutableLiveData<>();
         mTrendingMovies = new MutableLiveData<>();
+        mPopularMovies = new MutableLiveData<>();
+        currentSearchResults = new ArrayList<>();
+        currentPopular = new ArrayList<>();
+        currentTrending = new ArrayList<>();
         compositeDisposable = new CompositeDisposable();
     }
-
     public LiveData<List<MovieModel>> getSearchMovies(){
         return mSearchMovies;
     }
-
+    public LiveData<List<MovieModel>> getPopularMovies(){
+        return mPopularMovies;
+    }
     public LiveData<List<MovieModel>> getTrendingMovies(){
         return mTrendingMovies;
     }
-    public void searchMoviesApi(String query, int pageNumber) {
-        if (retrieveMovieRunnable != null) {
-            retrieveMovieRunnable = null;
+    public void loadMoviesApi(int pageNumber) {
+        mPageNumber = pageNumber;
+
+        if (retrieveMovies != null) {
+            retrieveMovies = null;
         }
 
-        retrieveMovieRunnable = new RetrieveMovieRunnable(query, pageNumber);
+        retrieveMovies = new RetrieveMovies(pageNumber);
 
-        Single<Response<MovieSearchResponse>> moviesSearchSingle = retrieveMovieRunnable.getSearchMovies();
-        Single<Response<MovieSearchResponse>> trendingMoviesSingle = retrieveMovieRunnable.getTrendingMovies();
+        Single<Response<MovieSearchResponse>> trendingMoviesSingle = retrieveMovies.getTrendingMovies();
+        Single<Response<MovieSearchResponse>> popularMoviesSingle = retrieveMovies.getPopularMovies();
 
         compositeDisposable.add(
                 Flowable.zip(
-                                moviesSearchSingle.toFlowable(),
+                                popularMoviesSingle.toFlowable(),
                                 trendingMoviesSingle.toFlowable(),
-                                (moviesSearch, moviesTrending) -> {
-                                    List<MovieModel> searchResults = new ArrayList<>();
+                                (moviesPopular, moviesTrending) -> {
+                                    List<MovieModel> popularResults = new ArrayList<>();
                                     List<MovieModel> trendingResults = new ArrayList<>();
-                                    if (moviesSearch.isSuccessful()) {
-                                        searchResults.addAll(moviesSearch.body().getMovies());
+                                    if (moviesPopular.isSuccessful()) {
+                                        popularResults.addAll(moviesPopular.body().getMovies());
                                     }
                                     if (moviesTrending.isSuccessful()) {
                                         trendingResults.addAll(moviesTrending.body().getMovies());
                                     }
-                                    return new Pair<>(searchResults, trendingResults);
+                                    return new Pair<>(popularResults, trendingResults);
                                 }
                         )
                         .subscribeOn(Schedulers.io())
                         .observeOn(Schedulers.computation())
                         .subscribe(
                                 pair -> {
-                                    List<MovieModel> searchResults = pair.first;
+                                    List<MovieModel> popularResults = pair.first;
+                                    currentPopular.addAll(popularResults);
                                     List<MovieModel> trendingResults = pair.second;
-                                    for (MovieModel search: searchResults){
-                                        Log.e("search", search.getTitle());
-                                    }
-                                    for (MovieModel trending: trendingResults){
-                                        Log.e("trending", trending.getTitle());
-                                    }
-                                    mSearchMovies.postValue(searchResults);
-                                    mTrendingMovies.postValue(trendingResults);
+                                    currentTrending.addAll(trendingResults);
+                                    mPopularMovies.postValue(currentPopular);
+                                    mTrendingMovies.postValue(currentTrending);
                                 },
                                 throwable -> {
                                     // Xử lý lỗi
-                                    mSearchMovies.postValue(null);
+                                    mPopularMovies.postValue(null);
                                     mTrendingMovies.postValue(null);
                                 }
                         )
         );
     }
 
+    public void searchMovies(String query, int pageNumber) {
+        mPageNumber = pageNumber;
+        mQuery = query;
+
+        if (retrieveMovieRunnable != null) {
+            retrieveMovieRunnable = null;
+        }
+
+        retrieveMovieRunnable = new RetrieveMovieRunnable(query, pageNumber);
+
+        Single<Response<MovieSearchResponse>> searchMoviesSingle = retrieveMovieRunnable.getSearchMovies();
+        compositeDisposable.add(
+                searchMoviesSingle
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(Schedulers.computation())
+                        .subscribe(
+                                response -> {
+                                    List<MovieModel> searchResults = new ArrayList<>();
+                                    if (response.isSuccessful()) {
+                                        currentSearchResults.addAll(response.body().getMovies());
+                                        searchResults.addAll(currentSearchResults);
+                                    }
+                                    mSearchMovies.postValue(searchResults);
+                                },
+                                throwable -> {
+                                    // Xử lý lỗi
+                                    mSearchMovies.postValue(null);
+                                }
+                        )
+        );
+
+
+    }
+    public void searchNextPage(){
+        searchMovies(mQuery,mPageNumberMovies + 1);
+    }
+    public void loadNextPage(){
+        loadMoviesApi(mPageNumber + 1);
+    }
     private class RetrieveMovieRunnable {
         private String query;
         private int pageNumber;
@@ -115,7 +168,18 @@ public class MovieRepository {
                     pageNumber
             );
         }
-
+    }
+    private class RetrieveMovies {
+        private int pageNumber;
+        public RetrieveMovies(int pageNumber) {
+            this.pageNumber = pageNumber;
+        }
+        public Single<Response<MovieSearchResponse>> getPopularMovies() {
+            return Servicey.getMovieApi().getPopularMovies(
+                    Credentials.API_KEY,
+                    pageNumber
+            );
+        }
         public Single<Response<MovieSearchResponse>> getTrendingMovies() {
             return Servicey.getMovieApi().getTrendingMovies(
                     Credentials.API_KEY,

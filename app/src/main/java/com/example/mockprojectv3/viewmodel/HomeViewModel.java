@@ -9,30 +9,36 @@ import com.example.mockprojectv3.repositories.MovieRepository;
 import java.util.List;
 
 public class HomeViewModel extends ViewModel {
-    //RxJava
     private MovieRepository movieRepository;
     private String mQuery;
     private int mPageNumber;
-    public HomeViewModel(){
+    private int mPageNumberSearchMovies;
+    public HomeViewModel() {
         movieRepository = MovieRepository.getInstance();
     }
-    public LiveData<List<MovieModel>> getSearchMovies(){
+    public LiveData<List<MovieModel>> getSearchMovies() {
         return movieRepository.getSearchMovies();
     }
-    public LiveData<List<MovieModel>> getTrendingMovies(){
+    public LiveData<List<MovieModel>> getTrendingMovies() {
         return movieRepository.getTrendingMovies();
     }
-    public void searchMovieApi(String query, int pageNumber){
-        mQuery = query;
-        mPageNumber = pageNumber;
-        movieRepository.searchMoviesApi(query, pageNumber);
+    public LiveData<List<MovieModel>> getPopularMovies() {
+        return movieRepository.getPopularMovies();
     }
+    public void loadMovies(int pageNumber) {
+        mPageNumber = pageNumber;
+        movieRepository.loadMoviesApi(pageNumber);
+    }
+    public void searchMovies(String query, int pageNumber){
+        mQuery = query;
+        mPageNumberSearchMovies = pageNumber;
+        movieRepository.searchMovies(query, pageNumber);
+    }
+
     public void searchNextPage(){
-        movieRepository.searchMoviesApi(mQuery, mPageNumber + 1);
+        movieRepository.searchNextPage();
     }
-    public void getTrendingMovies(String query, int pageNumber){
-        mQuery = query;
-        mPageNumber = pageNumber;
-        movieRepository.searchMoviesApi(query, pageNumber);
+    public void loadNextPage() {
+        movieRepository.loadNextPage();
     }
 }

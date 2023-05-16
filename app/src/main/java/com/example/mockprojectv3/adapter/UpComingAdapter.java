@@ -22,46 +22,69 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UpComingAdapter  extends RecyclerView.Adapter<UpComingAdapter.UpcomingViewHolder>{
-    private MovieSearchResponse movieSearchResponse;
-    public void setData(MovieSearchResponse movieSearchResponse){
-        this.movieSearchResponse = movieSearchResponse;
+    private List<MovieModel> mMovies;
+
+    private OnUpcomingListener onUpcomingListener;
+    public UpComingAdapter(OnUpcomingListener onUpcomingListener) {
+        this.onUpcomingListener = onUpcomingListener;
+    }
+    public void setData(List<MovieModel> list){
+        this.mMovies = list;
         notifyDataSetChanged();
     }
 
     @NonNull
     @Override
     public UpcomingViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new UpcomingViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_upcoming, parent, false));
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_upcoming,parent,false);
+        return new UpcomingViewHolder(view, onUpcomingListener);
     }
 
     @Override
     public void onBindViewHolder(@NonNull UpComingAdapter.UpcomingViewHolder holder, int position) {
-        MovieModel movies = movieSearchResponse.getMovies().get(position);
-        if(movies == null){
-            return;
-        }
-        holder.tvTitle.setText(movies.getTitle());
+        holder.tvTitle.setText(mMovies.get(position).getTitle());
+
         Glide.with(holder.itemView.getContext())
                 .load("https://image.tmdb.org/t/p/w500/"
-                        +movies.getPoster_path())
+                        +mMovies.get(position).getPoster_path())
                 .into(holder.ivUpcoming);
-
     }
 
     @Override
     public int getItemCount() {
-        if(movieSearchResponse !=null){
-            return movieSearchResponse.getMovies().size();
+        if(mMovies != null){
+            return mMovies.size();
         }
         return 0;
     }
-    public class UpcomingViewHolder extends RecyclerView.ViewHolder{
-        private TextView tvTitle;
+
+    public MovieModel getSelectedTrendingMovie(int position) {
+        if(mMovies != null){
+            if(mMovies.size() >0){
+                return mMovies.get(position);
+            }
+        }
+        return null;
+    }
+
+
+
+    public class UpcomingViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+        OnUpcomingListener onUpcomingListener;
         private ImageView ivUpcoming;
-        public UpcomingViewHolder(@NonNull View itemView){
+        private TextView tvTitle;
+        public UpcomingViewHolder(@NonNull View itemView, OnUpcomingListener onUpcomingListener){
             super(itemView);
-            this.tvTitle = itemView.findViewById(R.id.tvUpcoming);
+            this.onUpcomingListener = onUpcomingListener;
+            this.tvTitle = itemView.findViewById(R.id.tvTitle_Upcoming);
             this.ivUpcoming = itemView.findViewById(R.id.ivUpcoming);
+
+            itemView.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View view) {
+            onUpcomingListener.onUpcomingClick(getAdapterPosition());
         }
     }
 }
