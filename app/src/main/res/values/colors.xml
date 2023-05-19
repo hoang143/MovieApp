@@ -13,4 +13,5 @@
             <item android:color="#757575" android:state_checked="false" />
         </selector>
     </color>
+    <color name="color_text_hint">#8E8E93</color>
 </resources>

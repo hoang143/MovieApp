@@ -1,77 +1,173 @@
 package com.example.mockprojectv3.ui.main;
 
-import android.net.Uri;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Handler;
+import android.text.method.HideReturnsTransformationMethod;
+import android.text.method.PasswordTransformationMethod;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.navigation.Navigation;
-
-import android.os.Handler;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.mockprojectv3.R;
+import com.example.mockprojectv3.databinding.FragmentLoginBinding;
+import com.example.mockprojectv3.service.State;
+import com.example.mockprojectv3.viewmodel.UserViewModel;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.auth.FirebaseUser;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link LoginFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class LoginFragment extends Fragment {
-
-    Button btnLogIn;
-    EditText etMail, etPassword;
-    TextView tvSignup;
+    private FragmentLoginBinding binding;
+    private UserViewModel userViewModel;
+    private FragmentManager fragmentManager;
+    private ProgressDialog progressDialog;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        View view = LayoutInflater.from(getContext()).inflate(R.layout.fragment_login,container, false);
-        BottomNavigationView bottomNavigationView = requireActivity().findViewById(R.id.bottomNav);
-        bottomNavigationView.setVisibility(View.GONE);
-        // Inflate the layout for this fragment
-//        btnLogIn = view.findViewById(R.id.btnLogin);
-        initUI(view);
-        btnLogIn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Navigation.findNavController(view).navigate(LoginFragmentDirections.login2home());
-                BottomNavigationView bottomNavigationView = requireActivity().findViewById(R.id.bottomNav);
-                bottomNavigationView.setVisibility(View.VISIBLE);
-            }
-        });
-        tvSignup.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Navigation.findNavController(view).navigate(LoginFragmentDirections.login2signup());
-                BottomNavigationView bottomNavigationView = requireActivity().findViewById(R.id.bottomNav);
-                bottomNavigationView.setVisibility(View.GONE);
-            }
-        });
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        binding = FragmentLoginBinding.inflate(inflater, container, false);
+        View view = binding.getRoot();
 
+        userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
+        binding.setUserViewModel(userViewModel);
+        binding.setLifecycleOwner(this);
 
-
+        initUI();
+        initListeners();
 
         return view;
+    }
+
+    private void initUI() {
+        BottomNavigationView bottomNavigationView = requireActivity().findViewById(R.id.bottomNav);
+        bottomNavigationView.setVisibility(View.GONE);
+        fragmentManager = requireActivity().getSupportFragmentManager();
+
+        progressDialog = new ProgressDialog(requireContext());
+
+        binding.etUserNameLogin.setSingleLine();
+        binding.etPasswordLogin.setSingleLine();
+    }
+
+    private void initListeners() {
+        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
+            private boolean doubleBackToExitPressedOnce = false;
+
+            @Override
+            public void handleOnBackPressed() {
+                if (doubleBackToExitPressedOnce) {
+                    requireActivity().finish();
+                } else {
+                    doubleBackToExitPressedOnce = true;
+                    Toast.makeText(getContext(), "Press back to close", Toast.LENGTH_SHORT).show();
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            doubleBackToExitPressedOnce = false;
+                        }
+                    }, 3000);
+                }
+            }
+        });
+
+       binding.tvLogin.setOnClickListener(new View.OnClickListener() {
+           @Override
+           public void onClick(View view) {
+               onClickSignIn();
+           }
+       });
+
+        binding.getRoot().setOnTouchListener((v, event) -> {
+            hideKeyboard();
+            return false;
+        });
+
+        binding.tvSignUp.setOnClickListener(view -> {
+            FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
+            fragmentManager.beginTransaction()
+                    .replace(R.id.containerFragment, new SignupFragment())
+                    .commit();
+        });
+
+        binding.etPasswordLogin.setOnTouchListener((v, event) -> {
+            final int DRAWABLE_RIGHT = 2;
+
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+                if (event.getRawX() >= (binding.etPasswordLogin.getRight() - binding.etPasswordLogin.getCompoundDrawables()[DRAWABLE_RIGHT].getBounds().width())) {
+                    togglePasswordVisibility();
+                    return true;
+                }
+            }
+            return false;
+        });
+    }
+
+    private void onClickSignIn() {
+        userViewModel.signIn(binding.etUserNameLogin.getText().toString(), binding.etPasswordLogin.getText().toString());
+
+        ConnectivityManager connectivityManager = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+
+        if (networkInfo == null || !networkInfo.isConnected()) {
+            Toast.makeText(getContext(), "No internet connection", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        progressDialog.setTitle("Please wait to Sign in");
+        progressDialog.show();
+
+        userViewModel.getCurrentUserState().observe(getViewLifecycleOwner(), new Observer<State<FirebaseUser>>() {
+            @Override
+            public void onChanged(State<FirebaseUser> state) {
+
+                if (state.getStatus() == State.Status.SUCCESS && state.getData() != null) {
+                    progressDialog.dismiss();
+                    userViewModel.navigateTo(fragmentManager, new HomeFragment());
+
+                } else if (state.getStatus() == State.Status.ERROR) {
+                    progressDialog.dismiss();
+                    Toast.makeText(getContext(), state.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    private void togglePasswordVisibility() {
+        if (binding.etPasswordLogin.getTransformationMethod() == PasswordTransformationMethod.getInstance()) {
+            binding.etPasswordLogin.setTransformationMethod(HideReturnsTransformationMethod.getInstance());
+            binding.etPasswordLogin.setSelection(binding.etPasswordLogin.getText().length());
+            binding.etPasswordLogin.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.eyeslash_white, 0);
+        } else {
+            binding.etPasswordLogin.setTransformationMethod(PasswordTransformationMethod.getInstance());
+            binding.etPasswordLogin.setSelection(binding.etPasswordLogin.getText().length());
+            binding.etPasswordLogin.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.eye_white, 0);
+        }
+    }
+
+    private void hideKeyboard() {
+        InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        View view = requireActivity().getCurrentFocus();
+        if (view != null) {
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-//        requireActivity().getSupportFragmentManager().popBackStack();
-    }
-
-    private void initUI(View view){
-        btnLogIn = view.findViewById(R.id.btnLogin);
-        tvSignup = view.findViewById(R.id.tvSignUp);
-        etMail = view.findViewById(R.id.etUserNameLogin);
-        etPassword = view.findViewById(R.id.etPasswordLogin);
+        binding = null;
     }
 }

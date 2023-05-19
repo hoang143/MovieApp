@@ -10,40 +10,25 @@
         android:name="com.example.mockprojectv3.ui.main.SplashFragment"
         android:label="fragment_splash"
         tools:layout="@layout/fragment_splash" >
-        <action
-            android:id="@+id/splash2login"
-            app:destination="@id/loginFragment" />
-        <action
-            android:id="@+id/splash2home"
-            app:destination="@id/homeFragment" />
     </fragment>
     <fragment
         android:id="@+id/loginFragment"
         android:name="com.example.mockprojectv3.ui.main.LoginFragment"
         android:label="fragment_login"
         tools:layout="@layout/fragment_login" >
-        <action
-            android:id="@+id/login2signup"
-            app:destination="@id/signupFragment" />
-        <action
-            android:id="@+id/login2home"
-            app:destination="@id/homeFragment" />
     </fragment>
     <fragment
         android:id="@+id/homeFragment"
         android:name="com.example.mockprojectv3.ui.main.HomeFragment"
         android:label="fragment_home"
         tools:layout="@layout/fragment_home" >
-        <action
-            android:id="@+id/home2details"
-            app:destination="@id/movieDetailFragment"
-            app:argType="com.example.mockprojectv3.model.MovieModel"/>
     </fragment>
     <fragment
         android:id="@+id/profileFragment"
         android:name="com.example.mockprojectv3.ui.main.ProfileFragment"
         android:label="fragment_profile"
-        tools:layout="@layout/fragment_profile" />
+        tools:layout="@layout/fragment_profile" >
+    </fragment>
     <fragment
         android:id="@+id/favouriteFragment"
         android:name="com.example.mockprojectv3.ui.main.FavouriteFragment"
@@ -54,21 +39,12 @@
         android:name="com.example.mockprojectv3.ui.main.MovieDetailFragment"
         android:label="fragment_movie_detail"
         tools:layout="@layout/fragment_movie_detail" >
-        <argument
-            android:name="movie"
-            app:argType="com.example.mockprojectv3.model.MovieModel" />
     </fragment>
     <fragment
         android:id="@+id/signupFragment"
         android:name="com.example.mockprojectv3.ui.main.SignupFragment"
         android:label="fragment_signup"
         tools:layout="@layout/fragment_signup" >
-        <action
-            android:id="@+id/signup2login"
-            app:destination="@id/loginFragment" />
-        <action
-            android:id="@+id/signup2home"
-            app:destination="@id/homeFragment" />
     </fragment>
     <fragment
         android:id="@+id/notificationFragment"

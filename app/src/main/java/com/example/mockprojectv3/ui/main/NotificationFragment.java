@@ -40,8 +40,6 @@ public class NotificationFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Toast.makeText(this.getContext(), "on create", Toast.LENGTH_SHORT).show();
-
         mFragmentNotificationBinding = FragmentNotificationBinding.inflate(inflater, container, false);
 
         NotificationViewModel notificationViewModel = new NotificationViewModel("Button clicked!");
@@ -65,21 +63,21 @@ public class NotificationFragment extends Fragment {
         lst.add(new NotificationViewModel("hoang 3"));
         lst.add(new NotificationViewModel("hoang 4"));
         lst.add(new NotificationViewModel("hoang 5"));
-        lst.add(new NotificationViewModel("hoang 1"));
-        lst.add(new NotificationViewModel("hoang 2"));
-        lst.add(new NotificationViewModel("hoang 3"));
-        lst.add(new NotificationViewModel("hoang 4"));
-        lst.add(new NotificationViewModel("hoang 5"));
-        lst.add(new NotificationViewModel("hoang 1"));
-        lst.add(new NotificationViewModel("hoang 2"));
-        lst.add(new NotificationViewModel("hoang 3"));
-        lst.add(new NotificationViewModel("hoang 4"));
-        lst.add(new NotificationViewModel("hoang 5"));
-        lst.add(new NotificationViewModel("hoang 1"));
-        lst.add(new NotificationViewModel("hoang 2"));
-        lst.add(new NotificationViewModel("hoang 3"));
-        lst.add(new NotificationViewModel("hoang 4"));
-        lst.add(new NotificationViewModel("hoang 5"));
+        lst.add(new NotificationViewModel("hoang 6"));
+        lst.add(new NotificationViewModel("hoang 7"));
+        lst.add(new NotificationViewModel("hoang 8"));
+        lst.add(new NotificationViewModel("hoang 9"));
+        lst.add(new NotificationViewModel("hoang 10"));
+        lst.add(new NotificationViewModel("hoang 11"));
+        lst.add(new NotificationViewModel("hoang 12"));
+        lst.add(new NotificationViewModel("hoang 13"));
+        lst.add(new NotificationViewModel("hoang 14"));
+        lst.add(new NotificationViewModel("hoang 15"));
+        lst.add(new NotificationViewModel("hoang 16"));
+        lst.add(new NotificationViewModel("hoang 17"));
+        lst.add(new NotificationViewModel("hoang 18"));
+        lst.add(new NotificationViewModel("hoang 19"));
+        lst.add(new NotificationViewModel("hoang 20"));
         return lst;
     }
 
