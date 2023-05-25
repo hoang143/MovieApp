@@ -25,7 +25,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.mockprojectv3.R;
 import com.example.mockprojectv3.databinding.FragmentLoginBinding;
-import com.example.mockprojectv3.service.State;
+import com.example.mockprojectv3.repositories.Resource;
 import com.example.mockprojectv3.viewmodel.UserViewModel;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseUser;
@@ -129,15 +129,15 @@ public class LoginFragment extends Fragment {
         progressDialog.setTitle("Please wait to Sign in");
         progressDialog.show();
 
-        userViewModel.getCurrentUserState().observe(getViewLifecycleOwner(), new Observer<State<FirebaseUser>>() {
+        userViewModel.getCurrentUserState().observe(getViewLifecycleOwner(), new Observer<Resource<FirebaseUser>>() {
             @Override
-            public void onChanged(State<FirebaseUser> state) {
+            public void onChanged(Resource<FirebaseUser> state) {
 
-                if (state.getStatus() == State.Status.SUCCESS && state.getData() != null) {
+                if (state.getStatus() == Resource.Status.SUCCESS && state.getData() != null) {
                     progressDialog.dismiss();
-                    userViewModel.navigateTo(fragmentManager, new HomeFragment());
+                    userViewModel.navigateTo(fragmentManager, HomeFragment.getInstance());
 
-                } else if (state.getStatus() == State.Status.ERROR) {
+                } else if (state.getStatus() == Resource.Status.ERROR) {
                     progressDialog.dismiss();
                     Toast.makeText(getContext(), state.getMessage(), Toast.LENGTH_SHORT).show();
                 }

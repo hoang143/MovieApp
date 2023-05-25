@@ -1,29 +1,35 @@
 package com.example.mockprojectv3.viewmodel;
 
+import android.database.Observable;
+import android.util.Log;
+
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.mockprojectv3.model.MovieModel;
 import com.example.mockprojectv3.repositories.MovieRepository;
-import com.example.mockprojectv3.repositories.MovieRepositoryImplement;
+import com.example.mockprojectv3.repositories.MovieRepositoryImpl;
 import com.example.mockprojectv3.repositories.Resource;
 
 import java.util.List;
 
 public class HomeViewModel extends ViewModel {
     private final MovieRepository movieRepository;
-    private String mQuery;
     private int mPageNumber;
     private int mPageNumberSearchMovies;
     private final LiveData<Resource<List<MovieModel>>> mSearchMovies;
     private final LiveData<Resource<List<MovieModel>>> mTrendingMovies;
     private final LiveData<Resource<List<MovieModel>>> mPopularMovies;
+    private final LiveData<Resource<MovieModel>> mSearchMovieByID;
+
 
     public HomeViewModel() {
-        movieRepository = new MovieRepositoryImplement();
+        movieRepository = MovieRepositoryImpl.getInstance();
         mSearchMovies = movieRepository.getSearchMovies();
         mTrendingMovies = movieRepository.getTrendingMovies();
         mPopularMovies = movieRepository.getPopularMovies();
+        mSearchMovieByID = movieRepository.getMovieByID();
     }
 
     public LiveData<Resource<List<MovieModel>>> getSearchMovies() {
@@ -38,13 +44,20 @@ public class HomeViewModel extends ViewModel {
         return mPopularMovies;
     }
 
+    public LiveData<Resource<MovieModel>> getSearchMovieByID() {
+        return mSearchMovieByID;
+    }
+
+    public void searchMovieByID(int movieID) {
+        movieRepository.getMovieByID(movieID);
+    }
+
     public void loadMovies(int pageNumber) {
         mPageNumber = pageNumber;
         movieRepository.loadMoviesApi(pageNumber);
     }
 
     public void searchMovies(String query, int pageNumber) {
-        mQuery = query;
         mPageNumberSearchMovies = pageNumber;
         movieRepository.searchMovies(query, pageNumber);
     }
@@ -56,4 +69,14 @@ public class HomeViewModel extends ViewModel {
     public void loadNextPage() {
         movieRepository.loadNextPage();
     }
+
+    public void setPageNumber(int mPageNumber) {
+        this.mPageNumber = mPageNumber;
+    }
+
+    public int getPageNumber() {
+        return mPageNumber;
+    }
+
+
 }

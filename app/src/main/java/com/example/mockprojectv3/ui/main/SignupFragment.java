@@ -8,14 +8,11 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.Navigation;
 
-import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,17 +22,10 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.mockprojectv3.R;
 import com.example.mockprojectv3.databinding.FragmentSignupBinding;
-import com.example.mockprojectv3.service.State;
+import com.example.mockprojectv3.repositories.Resource;
 import com.example.mockprojectv3.viewmodel.UserViewModel;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.UserProfileChangeRequest;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -127,15 +117,15 @@ public class SignupFragment extends Fragment {
 
         progressDialog.setTitle("Please wait to Sign in");
         progressDialog.show();
-        userViewModel.getCurrentUserState().observe(getViewLifecycleOwner(), new Observer<State<FirebaseUser>>() {
+        userViewModel.getCurrentUserState().observe(getViewLifecycleOwner(), new Observer<Resource<FirebaseUser>>() {
             @Override
-            public void onChanged(State<FirebaseUser> state) {
+            public void onChanged(Resource<FirebaseUser> state) {
 
-                if (state.getStatus() == State.Status.SUCCESS && state.getData() != null) {
+                if (state.getStatus() == Resource.Status.SUCCESS && state.getData() != null) {
                     progressDialog.dismiss();
                     userViewModel.navigateTo(fragmentManager, new HomeFragment());
 
-                } else if (state.getStatus() == State.Status.ERROR) {
+                } else if (state.getStatus() == Resource.Status.ERROR) {
                     progressDialog.dismiss();
                     Toast.makeText(getContext(), state.getMessage(), Toast.LENGTH_SHORT).show();
                 }

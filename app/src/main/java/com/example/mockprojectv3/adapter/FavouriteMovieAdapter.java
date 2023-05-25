@@ -10,19 +10,17 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.GlideBuilder;
 import com.example.mockprojectv3.R;
-import com.example.mockprojectv3.model.Category;
 import com.example.mockprojectv3.model.MovieModel;
 import com.example.mockprojectv3.utils.Credentials;
 
 import java.util.List;
 
-public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieViewHolder> {
+public class FavouriteMovieAdapter extends RecyclerView.Adapter<FavouriteMovieAdapter.FavouriteMovieViewHolder> {
     private List<MovieModel> movies;
     private OnItemListener onItemListener;
 
-    public MoviesAdapter(OnItemListener onItemListener){
+    public FavouriteMovieAdapter(OnItemListener onItemListener){
         this.onItemListener = onItemListener;
     }
 
@@ -33,18 +31,19 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieViewH
 
     @NonNull
     @Override
-    public MovieViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_movie,parent,false);
-        return new MovieViewHolder(view, onItemListener);
+    public FavouriteMovieViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_favorite_movie,parent,false);
+        return new FavouriteMovieViewHolder(view, onItemListener);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull MovieViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull FavouriteMovieViewHolder holder, int position) {
         MovieModel movie = movies.get(position);
         if(movie == null){
             return;
         }
         holder.tvTitle.setText(movie.getTitle());
+        holder.tvOverView.setText(movie.getMovie_overview());
         Glide.with(holder.itemView.getContext()).load(Credentials.BASE_URL_IMAGE + movie.getPoster_path())
                 .error(R.drawable.img_not_found)
                 .into(holder.ivPoter);
@@ -67,15 +66,16 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieViewH
         return null;
     }
 
-    public class MovieViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        private TextView tvTitle;
+    public class FavouriteMovieViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        private TextView tvTitle, tvOverView;
         private ImageView ivPoter;
         OnItemListener onItemListener;
 
-        public MovieViewHolder(@NonNull View itemView, OnItemListener onItemListener) {
+        public FavouriteMovieViewHolder(@NonNull View itemView, OnItemListener onItemListener) {
             super(itemView);
-            tvTitle = itemView.findViewById(R.id.tvTitle);
-            ivPoter = itemView.findViewById(R.id.ivMovie);
+            tvTitle = itemView.findViewById(R.id.tv_title_favourite_movie);
+            ivPoter = itemView.findViewById(R.id.ivPoster_favourite_movie);
+            tvOverView = itemView.findViewById(R.id.tv_over_view_favourite_movie);
             this.onItemListener = onItemListener;
 
             itemView.setOnClickListener(this);
@@ -86,4 +86,6 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieViewH
             onItemListener.onItemClick(getAdapterPosition());
         }
     }
+
 }
+

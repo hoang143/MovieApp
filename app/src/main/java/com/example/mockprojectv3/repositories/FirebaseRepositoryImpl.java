@@ -1,4 +1,4 @@
-package com.example.mockprojectv3.service;
+package com.example.mockprojectv3.repositories;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.MutableLiveData;
@@ -11,28 +11,30 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
 
-public class FirebaseService {
-    private static FirebaseService instance;
-    public static FirebaseService getInstance() {
+public class FirebaseRepositoryImpl implements FirebaseRepository {
+    private static FirebaseRepositoryImpl instance;
+
+    public static FirebaseRepositoryImpl getInstance() {
         if (instance == null) {
-            instance = new FirebaseService();
+            instance = new FirebaseRepositoryImpl();
         }
         return instance;
     }
 
-    private FirebaseAuth mAuth;
-    private MutableLiveData<State<FirebaseUser>> mCurrentUser;
+    private final FirebaseAuth mAuth;
+    private MutableLiveData<Resource<FirebaseUser>> mCurrentUser;
 
-    private FirebaseService() {
+    private FirebaseRepositoryImpl() {
         mAuth = FirebaseAuth.getInstance();
         mCurrentUser = new MutableLiveData<>();
     }
 
+    @Override
     public void signUp(String email, String password) {
-        mCurrentUser.setValue(State.loading());
+        mCurrentUser.setValue(Resource.loading());
 
         if (email.isEmpty() || password.isEmpty()) {
-            mCurrentUser.setValue(State.error("Email and password cannot be empty."));
+            mCurrentUser.setValue(Resource.error("Email and password cannot be empty."));
             return;
         }
 
@@ -40,7 +42,7 @@ public class FirebaseService {
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        mCurrentUser.setValue(State.error(e.getMessage()));
+                        mCurrentUser.setValue(Resource.error(e.getMessage()));
                     }
                 })
                 .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
@@ -48,19 +50,20 @@ public class FirebaseService {
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
                             FirebaseUser user = mAuth.getCurrentUser();
-                            mCurrentUser.setValue(State.success(user));
+                            mCurrentUser.setValue(Resource.success(user));
                         } else {
                             String errorMessage = task.getException().getMessage();
                             if (errorMessage.contains("password is invalid")) {
-                                mCurrentUser.setValue(State.error("Invalid email or password."));
+                                mCurrentUser.setValue(Resource.error("Invalid email or password."));
                             } else {
-                                mCurrentUser.setValue(State.error(errorMessage));
+                                mCurrentUser.setValue(Resource.error(errorMessage));
                             }
                         }
                     }
                 });
     }
 
+    @Override
     public void updateProfile(UserProfileChangeRequest profileUpdates) {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) {
@@ -72,10 +75,10 @@ public class FirebaseService {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         if (task.isSuccessful()) {
-                            mCurrentUser.setValue(State.success(user));
+                            mCurrentUser.setValue(Resource.success(user));
                         } else {
                             String errorMessage = task.getException().getMessage();
-                            mCurrentUser.setValue(State.error(errorMessage));
+                            mCurrentUser.setValue(Resource.error(errorMessage));
                         }
                     }
                 })
@@ -83,18 +86,17 @@ public class FirebaseService {
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         String errorMessage = e.getMessage();
-                        mCurrentUser.setValue(State.error(errorMessage));
+                        mCurrentUser.setValue(Resource.error(errorMessage));
                     }
                 });
     }
 
-
-
+    @Override
     public void signIn(String email, String password) {
-        mCurrentUser.setValue(State.loading());
+        mCurrentUser.setValue(Resource.loading());
 
         if (email.isEmpty() || password.isEmpty()) {
-            mCurrentUser.setValue(State.error("Email and password cannot be empty."));
+            mCurrentUser.setValue(Resource.error("Email and password cannot be empty."));
             return;
         }
 
@@ -104,26 +106,28 @@ public class FirebaseService {
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
                             FirebaseUser user = mAuth.getCurrentUser();
-                            mCurrentUser.setValue(State.success(user));
+                            mCurrentUser.setValue(Resource.success(user));
                         } else {
                             String errorMessage = task.getException().getMessage();
                             if (errorMessage.contains("password is invalid") ||
                                     errorMessage.contains("There is no user record corresponding to this identifier")) {
-                                mCurrentUser.setValue(State.error("Invalid email or password."));
+                                mCurrentUser.setValue(Resource.error("Invalid email or password."));
                             } else {
-                                mCurrentUser.setValue(State.error(errorMessage));
+                                mCurrentUser.setValue(Resource.error(errorMessage));
                             }
                         }
                     }
                 });
     }
 
+    @Override
     public void signOut() {
         mAuth.signOut();
-        mCurrentUser.setValue(State.success(null));
+        mCurrentUser.setValue(Resource.success(null));
     }
 
-    public MutableLiveData<State<FirebaseUser>> getCurrentUser() {
+    @Override
+    public MutableLiveData<Resource<FirebaseUser>> getCurrentUser() {
         return mCurrentUser;
     }
 }

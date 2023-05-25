@@ -1,7 +1,5 @@
 package com.example.mockprojectv3.ui.main;
 
-import android.content.Context;
-import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -16,13 +14,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.example.mockprojectv3.R;
 import com.example.mockprojectv3.databinding.FragmentSplashBinding;
-import com.example.mockprojectv3.service.State;
-import com.example.mockprojectv3.viewmodel.UserViewModel;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -60,7 +54,7 @@ public class SplashFragment extends Fragment {
        if(user == null){
            navigateTo(new LoginFragment());
        }else {
-           navigateTo(new HomeFragment());
+           navigateTo(HomeFragment.getInstance());
        }
     }
 

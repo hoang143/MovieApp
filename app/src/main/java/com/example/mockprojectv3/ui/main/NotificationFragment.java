@@ -83,7 +83,6 @@ public class NotificationFragment extends Fragment {
 
     @Override
     public void onStart() {
-        Toast.makeText(this.getContext(), "on start", Toast.LENGTH_SHORT).show();
         super.onStart();
         notificationAdapter.setData(getNotifications());
     }

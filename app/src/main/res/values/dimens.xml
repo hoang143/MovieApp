@@ -36,4 +36,5 @@
     <dimen name="height_250">250dp</dimen>
     <dimen name="margin_top_500">500dp</dimen>
     <dimen name="margin_top_550">550dp</dimen>
+    <dimen name="height_10">10dp</dimen>
 </resources>

@@ -6,7 +6,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.mockprojectv3.model.MovieModel;
-import com.example.mockprojectv3.request.Servicey;
+import com.example.mockprojectv3.request.ApiService;
 import com.example.mockprojectv3.response.MovieSearchResponse;
 import com.example.mockprojectv3.utils.Credentials;
 
@@ -14,16 +14,28 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import retrofit2.Response;
 
-public class MovieRepositoryImplement implements MovieRepository {
+public class MovieRepositoryImpl implements MovieRepository {
+
+    private static MovieRepositoryImpl instance;
+
+    public static MovieRepositoryImpl getInstance() {
+        if (instance == null) {
+            instance = new MovieRepositoryImpl();
+        }
+        return instance;
+    }
     private final MutableLiveData<Resource<List<MovieModel>>> mSearchMovies;
     private final MutableLiveData<Resource<List<MovieModel>>> mTrendingMovies;
     private final MutableLiveData<Resource<List<MovieModel>>> mPopularMovies;
+    private final MutableLiveData<Resource<MovieModel>> mMovieByID;
     private final List<MovieModel> currentSearchResults;
     private final List<MovieModel> currentPopular;
     private final List<MovieModel> currentTrending;
@@ -34,14 +46,19 @@ public class MovieRepositoryImplement implements MovieRepository {
     private RetrieveMovieRunnable retrieveMovieRunnable;
     private RetrieveMovies retrieveMovies;
 
-    public MovieRepositoryImplement() {
+    public MovieRepositoryImpl() {
         mSearchMovies = new MutableLiveData<>();
         mTrendingMovies = new MutableLiveData<>();
         mPopularMovies = new MutableLiveData<>();
         currentSearchResults = new ArrayList<>();
+        mMovieByID = new MutableLiveData<>();
         currentPopular = new ArrayList<>();
         currentTrending = new ArrayList<>();
         compositeDisposable = new CompositeDisposable();
+    }
+    @Override
+    public LiveData<Resource<MovieModel>> getMovieByID() {
+        return mMovieByID;
     }
 
     @Override
@@ -60,14 +77,38 @@ public class MovieRepositoryImplement implements MovieRepository {
     }
 
     @Override
+    public void getMovieByID(int movieID) {
+        Single<Response<MovieModel>> movieByID = ApiService.getMovieApi().searchSingleMovie(
+                movieID,
+                Credentials.API_KEY
+        );
+        compositeDisposable.add(
+                movieByID
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(Schedulers.computation())
+                        .subscribe(
+                                response->{
+                                    MovieModel movie = new MovieModel();
+                                    if (response.isSuccessful()) {
+                                        movie = response.body();
+                                    }
+                                    mMovieByID.postValue(Resource.success(movie));
+                                }, throwable -> {
+                                    String errorMessage = throwable.getMessage();
+                                    mMovieByID.postValue(Resource.error(errorMessage));
+                                }
+                        )
+        );
+
+    }
+
+    @Override
     public void loadMoviesApi(int pageNumber) {
         mPageNumber = pageNumber;
 
         if (retrieveMovies == null) {
             retrieveMovies = new RetrieveMovies(pageNumber);
         }
-
-
 
         Single<Response<MovieSearchResponse>> trendingMoviesSingle = retrieveMovies.getTrendingMovies();
         Single<Response<MovieSearchResponse>> popularMoviesSingle = retrieveMovies.getPopularMovies();
@@ -116,14 +157,12 @@ public class MovieRepositoryImplement implements MovieRepository {
 
     @Override
     public void searchMovies(String query, int pageNumber) {
-        mPageNumber = pageNumber;
+        mPageNumberMovies = pageNumber;
         mQuery = query;
-
-        if (retrieveMovieRunnable != null) {
-            retrieveMovieRunnable = null;
-        }
+        Log.e("Debug", "Query in search" + query);
 
         retrieveMovieRunnable = new RetrieveMovieRunnable(query, pageNumber);
+        clearSearchResults();
 
         Single<Response<MovieSearchResponse>> searchMoviesSingle = retrieveMovieRunnable.getSearchMovies();
         compositeDisposable.add(
@@ -168,9 +207,10 @@ public class MovieRepositoryImplement implements MovieRepository {
         }
 
         public Single<Response<MovieSearchResponse>> getSearchMovies() {
-            return Servicey.getMovieApi().searchMovies(
+            return ApiService.getMovieApi().searchMovies(
                     query,
-                    pageNumber
+                    pageNumber,
+                    Credentials.API_KEY
             );
         }
     }
@@ -183,18 +223,21 @@ public class MovieRepositoryImplement implements MovieRepository {
         }
 
         public Single<Response<MovieSearchResponse>> getPopularMovies() {
-            return Servicey.getMovieApi().getPopularMovies(
+            return ApiService.getMovieApi().getPopularMovies(
                     pageNumber,
                     Credentials.API_KEY
             );
         }
 
         public Single<Response<MovieSearchResponse>> getTrendingMovies() {
-            return Servicey.getMovieApi().getTrendingMovies(
+            return ApiService.getMovieApi().getTrendingMovies(
                     pageNumber,
                     Credentials.API_KEY
             );
         }
     }
-}
+    private void clearSearchResults() {
+        currentSearchResults.clear();
+    }
 
+}

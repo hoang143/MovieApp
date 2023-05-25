@@ -13,7 +13,7 @@ import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava3.RxJava3CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class Servicey {
+public class ApiService {
     private static OkHttpClient.Builder okBuilder;
     private static Retrofit.Builder retrofitBuilder;
     private static Retrofit retrofit;

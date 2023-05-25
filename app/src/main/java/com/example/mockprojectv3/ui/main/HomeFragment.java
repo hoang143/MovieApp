@@ -2,21 +2,18 @@ package com.example.mockprojectv3.ui.main;
 
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SearchView;
-import androidx.databinding.ObservableArrayList;
-import androidx.databinding.ObservableBoolean;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -26,8 +23,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -38,9 +33,9 @@ import com.example.mockprojectv3.adapter.OnItemListener;
 import com.example.mockprojectv3.databinding.FragmentHomeBinding;
 import com.example.mockprojectv3.model.Category;
 import com.example.mockprojectv3.model.MovieModel;
+import com.example.mockprojectv3.repositories.FirebaseRepositoryImpl;
 import com.example.mockprojectv3.repositories.Resource;
-import com.example.mockprojectv3.service.State;
-import com.example.mockprojectv3.utils.Credentials;
+import com.example.mockprojectv3.utils.Constants;
 import com.example.mockprojectv3.viewmodel.HomeViewModel;
 import com.example.mockprojectv3.viewmodel.UserViewModel;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -50,30 +45,51 @@ import com.google.firebase.auth.FirebaseUser;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HomeFragment extends Fragment implements OnItemListener {
+public class HomeFragment extends Fragment {
+    private static HomeFragment instance;
+
+    public static HomeFragment getInstance() {
+        if (instance == null) {
+            instance = new HomeFragment();
+        }
+        return instance;
+    }
+
     ProgressDialog progressDialog;
     private FragmentManager fragmentManager;
     private RecyclerView rcCategories;
     private RecyclerView rcPopular;
     private RecyclerView rcUpcoming;
+    private RecyclerView rcSearch;
     private CategoryAdapter categoryAdapter;
     private FragmentHomeBinding binding;
     private MoviesAdapter popularAdapter;
     private MoviesAdapter upcomingAdapter;
+    private MoviesAdapter searchAdapter;
     private SearchView searchView;
     private HomeViewModel homeViewModel;
     private UserViewModel userViewModel;
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Log.e("Debug", "CREATE");
+        homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
+        userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
+
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.e("Debug", "CREATE VIEW");
+
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View view = binding.getRoot();
 
-        homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
-        userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
+        binding.setLifecycleOwner(this);
         binding.setHomeViewModel(homeViewModel);
         binding.setUserViewModel(userViewModel);
+
         initUI();
 
         // Categories
@@ -81,12 +97,18 @@ public class HomeFragment extends Fragment implements OnItemListener {
 
         // Popular:
         ConfigurePopularRecyclerView();
-        ObservePopularChange();
-
         // Trending
         ConfigureTrendingRecyclerView();
-        ObserveTrendingChange();
+        ConfigureSearchRecyclerView();
         loadMovies(1);
+        ObservePopularChange();
+        ObserveTrendingChange();
+        ObserverSearchChange();
+
+
+        // Set up Search view
+        SetupSearchView();
+
         initListener();
 
         return view;
@@ -102,12 +124,21 @@ public class HomeFragment extends Fragment implements OnItemListener {
     }
 
     private void initListener() {
+        binding.tvWelcome.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                searchMovies("play", 1);
+            }
+        });
+        // Click Small Image in Home to navigate to Profile Fragment
         binding.ivProfile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 userViewModel.navigateTo(fragmentManager, new ProfileFragment());
             }
         });
+
+        //Press twice to exit
         requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
             private boolean doubleBackToExitPressedOnce = false;
 
@@ -136,85 +167,112 @@ public class HomeFragment extends Fragment implements OnItemListener {
         searchView = binding.svHome;
         rcCategories = binding.rcCategories;
         rcPopular = binding.rcPopular;
+        rcSearch = binding.rcSearch;
         progressDialog = new ProgressDialog(getContext());
         rcUpcoming = binding.rcUpcoming;
 
         //Glide
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        Uri photoUrl = user.getPhotoUrl();
-        Glide.with(getContext()).load(photoUrl).error(R.drawable.img_not_found).into(binding.ivProfile);
-        if(TextUtils.isEmpty(user.getDisplayName())){
-            binding.tvWelcome.setText("Welcome ");
-        }
-        binding.tvWelcome.setText("Welcome "+ user.getDisplayName());
-
-        // Set up Search view
-        SetupSearchView();
+        userViewModel.setUser(user);
+        userViewModel.getUser().observe(getViewLifecycleOwner(), new Observer<FirebaseUser>() {
+            @Override
+            public void onChanged(FirebaseUser firebaseUser) {
+                Uri photoUrl = firebaseUser.getPhotoUrl();
+                Glide.with(getContext()).load(photoUrl).error(R.drawable.img_not_found).into(binding.ivProfile);
+                if (TextUtils.isEmpty(firebaseUser.getDisplayName())) {
+                    binding.tvWelcome.setText(Constants.WELCOME);
+                }
+                binding.tvWelcome.setText(Constants.WELCOME + firebaseUser.getDisplayName());
+            }
+        });
     }
 
     private void SetupSearchView() {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                homeViewModel.searchMovies(query, 1);
+                Log.e("Debug", query);
+                searchMovies(query, 1);
+
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                return false;
+                // Xử lý khi người dùng thay đổi nội dung tìm kiếm
+                if (newText.isEmpty()) {
+                    // Ẩn ViewGroup nếu không có kết quả tìm kiếm
+                    rcSearch.setVisibility(View.GONE);
+                } else {
+                    // Hiển thị ViewGroup nếu có kết quả tìm kiếm
+                    rcSearch.setVisibility(View.VISIBLE);
+                    searchMovies(newText, 1);
+
+                    // Hiển thị kết quả tìm kiếm trong ViewGroup
+                    // Có thể sử dụng ListView, RecyclerView hoặc các thành phần khác để hiển thị kết quả
+                }
+                return true;
+            }
+        });
+    }
+
+    private void ObserverSearchChange() {
+        homeViewModel.getSearchMovies().observe(getViewLifecycleOwner(), new Observer<Resource<List<MovieModel>>>() {
+            @Override
+            public void onChanged(Resource<List<MovieModel>> resource) {
+                if (resource != null && resource.getStatus() == Resource.Status.SUCCESS) {
+                    List<MovieModel> movieModels = resource.getData();
+                    if (movieModels != null) {
+                        searchAdapter.setData(movieModels);
+                    }
+                    progressDialog.dismiss();
+                } else if (resource != null && resource.getStatus() == Resource.Status.ERROR) {
+                    progressDialog.dismiss();
+                    Toast.makeText(getContext(), resource.getMessage(), Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
 
     private void ObservePopularChange() {
-        homeViewModel.getPopularMovies().observe(getViewLifecycleOwner(), resource -> {
-            if (resource != null) {
-                switch (resource.getStatus()) {
-                    case LOADING:
-                        progressDialog = ProgressDialog.show(getContext(), "", "Loading...", true);
-                        break;
-                    case SUCCESS:
-                        List<MovieModel> movieModels = resource.getData();
-                        if (movieModels != null) {
-                            popularAdapter.setPopularData(movieModels);
-                        }
-                        progressDialog.dismiss();
-                        break;
-                    case ERROR:
-                        progressDialog.dismiss();
-                        Toast.makeText(getContext(), resource.getMessage(), Toast.LENGTH_SHORT).show();
-                        break;
+        homeViewModel.getPopularMovies().observe(getViewLifecycleOwner(), new Observer<Resource<List<MovieModel>>>() {
+            @Override
+            public void onChanged(Resource<List<MovieModel>> resource) {
+                if (resource != null && resource.getStatus() == Resource.Status.SUCCESS) {
+                    List<MovieModel> movieModels = resource.getData();
+                    if (movieModels != null) {
+                        popularAdapter.setData(movieModels);
+                    }
+                    progressDialog.dismiss();
+                } else if (resource != null && resource.getStatus() == Resource.Status.ERROR) {
+                    progressDialog.dismiss();
+                    Toast.makeText(getContext(), resource.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             }
         });
     }
 
     private void ObserveTrendingChange() {
-        homeViewModel.getTrendingMovies().observe(getViewLifecycleOwner(), new Observer<Resource<List<MovieModel>>>() {
-            @Override
-            public void onChanged(Resource<List<MovieModel>> resource) {
-                if (resource != null) {
-                    switch (resource.getStatus()) {
-                        case LOADING:
-                            progressDialog = ProgressDialog.show(getContext(), "", "Loading...", true);
-                            break;
-                        case SUCCESS:
+        homeViewModel.getTrendingMovies().observe(getViewLifecycleOwner(),
+                new Observer<Resource<List<MovieModel>>>() {
+                    @Override
+                    public void onChanged(Resource<List<MovieModel>> resource) {
+                        if (resource != null && resource.getStatus() == Resource.Status.SUCCESS) {
                             List<MovieModel> movieModels = resource.getData();
                             if (movieModels != null) {
-                                Toast.makeText(getContext(), "Loading Success", Toast.LENGTH_SHORT).show();
-                                upcomingAdapter.setUpComingData(movieModels);
+                                if (homeViewModel.getPageNumber() == 1) {
+                                    Toast.makeText(getContext(), "Loading Success", Toast.LENGTH_SHORT).show();
+                                }
+                                homeViewModel.setPageNumber(2);
+                                upcomingAdapter.setData(movieModels);
                             }
                             progressDialog.dismiss();
-                            break;
-                        case ERROR:
+                        } else if (resource != null && resource.getStatus() == Resource.Status.ERROR) {
                             progressDialog.dismiss();
                             Toast.makeText(getContext(), resource.getMessage(), Toast.LENGTH_SHORT).show();
-                            break;
+                        }
                     }
-                }
-            }
-        });
+                });
     }
 
     private void loadMovies(int pageNumber) {
@@ -222,15 +280,77 @@ public class HomeFragment extends Fragment implements OnItemListener {
         homeViewModel.loadMovies(pageNumber);
     }
 
+    private void searchMovies(String query, int pageNumber) {
+        progressDialog.show();
+        homeViewModel.searchMovies(query, pageNumber);
+    }
+
+    private void ConfigureSearchRecyclerView() {
+        searchAdapter = new MoviesAdapter(new OnItemListener() {
+            @Override
+            public void onItemClick(int position) {
+                MovieModel movieModel = searchAdapter.getSelectedMovie(position);
+                Bundle bundle = new Bundle();
+                bundle.putParcelable("movie", movieModel);
+
+                MovieDetailFragment movieDetailsFragment = new MovieDetailFragment();
+                movieDetailsFragment.setArguments(bundle);
+
+                userViewModel.navigateTo(fragmentManager, movieDetailsFragment);
+            }
+        });
+
+        rcSearch.setAdapter(searchAdapter);
+        rcSearch.setLayoutManager(new GridLayoutManager(requireContext(), 2));
+
+        rcSearch.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                int totalItemCount = layoutManager.getItemCount();
+                int lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition();
+
+                // Kiểm tra nếu chỉ còn 2 item hiển thị trên RecyclerView
+                if (totalItemCount > 0 && lastVisibleItemPosition >= totalItemCount - 5) {
+                    // Gọi phương thức next page của homeViewModel
+                    homeViewModel.searchNextPage();
+                }
+            }
+        });
+    }
+
     private void ConfigurePopularRecyclerView() {
-        popularAdapter = new MoviesAdapter(new ArrayList<>(), new ArrayList<>(), this);
+        popularAdapter = new MoviesAdapter(new OnItemListener() {
+            @Override
+            public void onItemClick(int position) {
+                MovieModel movieModel = popularAdapter.getSelectedMovie(position);
+                Bundle bundle = new Bundle();
+                bundle.putParcelable("movie", movieModel);
+
+                MovieDetailFragment movieDetailsFragment = new MovieDetailFragment();
+                movieDetailsFragment.setArguments(bundle);
+
+                userViewModel.navigateTo(fragmentManager, movieDetailsFragment);
+            }
+        });
+
         rcPopular.setAdapter(popularAdapter);
         rcPopular.setLayoutManager(new LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false));
 
         rcPopular.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-                if (!rcPopular.canScrollHorizontally(1)) {
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                int totalItemCount = layoutManager.getItemCount();
+                int lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition();
+
+                // Kiểm tra nếu chỉ còn 2 item hiển thị trên RecyclerView
+                if (totalItemCount > 0 && lastVisibleItemPosition >= totalItemCount - 5) {
+                    // Gọi phương thức next page của homeViewModel
                     homeViewModel.loadNextPage();
                 }
             }
@@ -238,14 +358,35 @@ public class HomeFragment extends Fragment implements OnItemListener {
     }
 
     private void ConfigureTrendingRecyclerView() {
-        upcomingAdapter = new MoviesAdapter(new ArrayList<>(), new ArrayList<>(), this);
+        upcomingAdapter = new MoviesAdapter(new OnItemListener() {
+            @Override
+            public void onItemClick(int position) {
+                MovieModel movieModel = upcomingAdapter.getSelectedMovie(position);
+                Bundle bundle = new Bundle();
+                bundle.putParcelable("movie", movieModel);
+
+                MovieDetailFragment movieDetailsFragment = new MovieDetailFragment();
+                movieDetailsFragment.setArguments(bundle);
+
+                userViewModel.navigateTo(fragmentManager, movieDetailsFragment);
+            }
+        });
+
         rcUpcoming.setAdapter(upcomingAdapter);
         rcUpcoming.setLayoutManager(new LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false));
 
         rcUpcoming.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-                if (!rcUpcoming.canScrollHorizontally(1)) {
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                int totalItemCount = layoutManager.getItemCount();
+                int lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition();
+
+                // Kiểm tra nếu chỉ còn 2 item hiển thị trên RecyclerView
+                if (totalItemCount > 0 && lastVisibleItemPosition >= totalItemCount - 5) {
+                    // Gọi phương thức next page của homeViewModel
                     homeViewModel.loadNextPage();
                 }
             }
@@ -269,34 +410,23 @@ public class HomeFragment extends Fragment implements OnItemListener {
     }
 
     @Override
-    public void onPopularClick(int position) {
-        MovieModel movieModel = popularAdapter.getSelectedMovie(position);
-        Bundle bundle = new Bundle();
-        bundle.putParcelable("movie", movieModel);
-
-        // Tạo instance của MovieDetailsFragment
-        MovieDetailFragment movieDetailsFragment = new MovieDetailFragment();
-        movieDetailsFragment.setArguments(bundle);
-
-        // Thay thế fragment hiện tại bằng MovieDetailsFragment
-        getParentFragmentManager().beginTransaction()
-                .replace(R.id.containerFragment, movieDetailsFragment)
-                .commit();
+    public void onResume() {
+        super.onResume();
+        Log.e("Debug", "RESUME");
     }
 
     @Override
-    public void onUpcomingClick(int position) {
-        MovieModel movieModel = popularAdapter.getSelectedMovie(position);
-        Bundle bundle = new Bundle();
-        bundle.putParcelable("movie", movieModel);
+    public void onPause() {
+        super.onPause();
+        Log.e("Debug", "PAUSE");
+        // Stop observing LiveData when navigating to other fragments
+        homeViewModel.getTrendingMovies().removeObservers(getViewLifecycleOwner());
+        homeViewModel.getPopularMovies().removeObservers(getViewLifecycleOwner());
+    }
 
-        // Tạo instance của MovieDetailsFragment
-        MovieDetailFragment movieDetailsFragment = new MovieDetailFragment();
-        movieDetailsFragment.setArguments(bundle);
-
-        // Thay thế fragment hiện tại bằng MovieDetailsFragment
-        getParentFragmentManager().beginTransaction()
-                .replace(R.id.containerFragment, movieDetailsFragment)
-                .commit();
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        Log.e("Debug", "DESTROY");
     }
 }

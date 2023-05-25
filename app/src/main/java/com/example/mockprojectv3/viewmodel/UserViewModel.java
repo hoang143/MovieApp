@@ -1,47 +1,55 @@
 package com.example.mockprojectv3.viewmodel;
 
-import android.net.ConnectivityManager;
-
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.mockprojectv3.R;
-import com.example.mockprojectv3.service.FirebaseService;
-import com.example.mockprojectv3.service.State;
+import com.example.mockprojectv3.repositories.FirebaseRepositoryImpl;
+import com.example.mockprojectv3.repositories.Resource;
+import com.example.mockprojectv3.repositories.FirebaseRepository;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
 
 public class UserViewModel extends ViewModel {
-    private FirebaseService firebaseService;
-    private MutableLiveData<State<FirebaseUser>> currentUserState;
+    private FirebaseRepository firebaseRepository;
+    private MutableLiveData<Resource<FirebaseUser>> currentUserState;
+    private MutableLiveData<FirebaseUser> user = new MutableLiveData<>();
 
-    public UserViewModel() {
-        firebaseService = FirebaseService.getInstance();
-        currentUserState = firebaseService.getCurrentUser();
+    public LiveData<FirebaseUser> getUser(){
+        return user;
+    }
+    public void setUser(FirebaseUser user1){
+        user.setValue(user1);
     }
 
+    public UserViewModel() {
+        firebaseRepository = FirebaseRepositoryImpl.getInstance();
+        currentUserState = firebaseRepository.getCurrentUser();
+    }
 
     public void signUp(String email, String password) {
-        firebaseService.signUp(email, password);
+        firebaseRepository.signUp(email, password);
     }
 
     public void signIn(String email, String password) {
         email = email.trim();
         password = password.trim();
-        firebaseService.signIn(email, password);
+        firebaseRepository.signIn(email, password);
     }
 
-    public void upDateProfile(UserProfileChangeRequest userProfileChangeRequest){
-        firebaseService.updateProfile(userProfileChangeRequest);
+    public void updateProfile(UserProfileChangeRequest userProfileChangeRequest) {
+        firebaseRepository.updateProfile(userProfileChangeRequest);
     }
 
     public void signOut() {
-        firebaseService.signOut();
+        firebaseRepository.signOut();
     }
 
-    public MutableLiveData<State<FirebaseUser>> getCurrentUserState() {
+    public MutableLiveData<Resource<FirebaseUser>> getCurrentUserState() {
         return currentUserState;
     }
 

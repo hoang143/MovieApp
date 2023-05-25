@@ -6,6 +6,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -28,9 +29,9 @@ import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity implements BottomNavigationView.OnNavigationItemSelectedListener{
     BottomNavigationView bottomNavigationView;
-    private ProfileFragment profileFragment = new ProfileFragment();
+    private ProfileFragment profileFragment = ProfileFragment.getInstance();
     public static final int MY_REQUEST_CODE = 10;
-    HomeFragment homeFragment = new HomeFragment();
+    HomeFragment homeFragment = HomeFragment.getInstance();
     FavouriteFragment favouriteFragment = new FavouriteFragment();
     NotificationFragment notificationFragment = new NotificationFragment();
     private ActivityResultLauncher<Intent> mActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
@@ -64,27 +65,86 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         bottomNavigationView.setOnItemSelectedListener(this);
         bottomNavigationView.setVisibility(View.GONE);
     }
+//    @Override
+//    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+//        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+//
+//        // Ẩn tất cả các Fragment hiện tại trước khi thêm Fragment mới
+//        if (homeFragment.isAdded()) {
+//            transaction.hide(homeFragment);
+//        }
+//        if (favouriteFragment.isAdded()) {
+//            transaction.hide(favouriteFragment);
+//        }
+//        if (notificationFragment.isAdded()) {
+//            transaction.hide(notificationFragment);
+//        }
+//        if (profileFragment.isAdded()) {
+//            transaction.hide(profileFragment);
+//        }
+//
+//        // Thực hiện replace Fragment mới
+//        switch (item.getItemId()){
+//            case R.id.home:
+//                if (homeFragment.isAdded()) {
+//                    transaction.show(homeFragment);
+//                } else {
+//                    transaction.add(R.id.containerFragment, homeFragment);
+//                }
+//                break;
+//
+//            case R.id.favourite:
+//                if (favouriteFragment.isAdded()) {
+//                    transaction.show(favouriteFragment);
+//                } else {
+//                    transaction.add(R.id.containerFragment, favouriteFragment);
+//                }
+//                break;
+//
+//            case R.id.notification:
+//                if (notificationFragment.isAdded()) {
+//                    transaction.show(notificationFragment);
+//                } else {
+//                    transaction.add(R.id.containerFragment, notificationFragment);
+//                }
+//                break;
+//
+//            case R.id.profile:
+//                if (profileFragment.isAdded()) {
+//                    transaction.show(profileFragment);
+//                } else {
+//                    transaction.add(R.id.containerFragment, profileFragment);
+//                }
+//                break;
+//        }
+//
+//        transaction.commit();
+//        return true;
+//    }
+
+
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        switch (item.getItemId()){
-            case R.id.home:
-                getSupportFragmentManager().beginTransaction().replace(R.id.containerFragment, homeFragment).commit();
-                return true;
+    switch (item.getItemId()){
+        case R.id.home:
+            getSupportFragmentManager().beginTransaction().replace(R.id.containerFragment, homeFragment).commit();
+            return true;
 
-            case R.id.favourite:
-                getSupportFragmentManager().beginTransaction().replace(R.id.containerFragment, favouriteFragment).commit();
-                return true;
+        case R.id.favourite:
+            getSupportFragmentManager().beginTransaction().replace(R.id.containerFragment, favouriteFragment).commit();
+            return true;
 
-            case R.id.notification:
-                getSupportFragmentManager().beginTransaction().replace(R.id.containerFragment, notificationFragment).commit();
-                return true;
+        case R.id.notification:
+            getSupportFragmentManager().beginTransaction().replace(R.id.containerFragment, notificationFragment).commit();
+            return true;
 
-            case R.id.profile:
-                getSupportFragmentManager().beginTransaction().replace(R.id.containerFragment, profileFragment).commit();
-                return true;
-        }
-        return false;
+        case R.id.profile:
+            getSupportFragmentManager().beginTransaction().replace(R.id.containerFragment, profileFragment).commit();
+            return true;
     }
+    return false;
+}
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
